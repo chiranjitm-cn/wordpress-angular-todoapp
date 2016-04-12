@@ -52,6 +52,7 @@ function rad_register_todos() {
 		'menu_position'      => null,
 		'with_front' => false,
 		'supports'           => array( 'title', 'editor' ),
+		'show_in_rest' => true,
 	);
 
 	register_post_type( 'todo', $args );
@@ -59,30 +60,63 @@ function rad_register_todos() {
 add_action( 'init', 'rad_register_todos' );
 
 
+function slug_get_is_done( $object, $field_name, $request ) {
+    return get_post_meta( $object[ 'id' ], $field_name, true );
+}
+
+function slug_update_spaceship( $value, $object, $field_name ) {
+	if ( ! $value || ! is_string( $value ) ) {
+		return;
+	}
+	return update_post_meta( $object->ID, $field_name, strip_tags( $value ) );
+}
+
+
 add_action( 'rest_api_init', 'register_rest_api_route');
 
 function register_rest_api_route() {
+	register_rest_field( 'todo',
+        'is_done',
+        array(
+            'get_callback'    => 'slug_get_is_done',
+            'update_callback' => 'slug_update_is_done',
+            'schema'          => null,
+        )
+    );
 
-	register_rest_route( 'rest-api-demo/v1', '/posts/todos/', array(
-				'methods' => 'GET',
-				'callback' => 'get_todos',
-				'args' => array(
-					'id' => array(
-					'validate_callback' => function($param, $request, $key) {
-						return is_numeric( $param );
-					}
-				),
-			),
+	// register_rest_route( 'rest-api-demo/v1', '/posts/todos/', array(
+	// 			'methods' => 'GET',
+	// 			'callback' => 'get_todos',
+	// 			'args' => array(
+	// 				'id' => array(
+	// 				'validate_callback' => function($param, $request, $key) {
+	// 					return is_numeric( $param );
+	// 				}
+	// 			),
+	// 		),
+	// 	)
+	// );
+
+	register_rest_route( 'rest-api-demo/v1', '/posts/todos/add', array(
+			'methods' => 'POST',
+			'callback' => 'add_todos',
+			'args' => $param,
 		)
 	);
+
 }
 
 function get_todos( $data ) {
 	$args = array(
 		'numberposts' => 10,
 		'post_type'   => 'todo'
-		);
-		$todos = get_posts($args);
-		return( $todos );
+	);
+	$todos = get_posts($args);
+	return( $todos );
+}
 
+function add_todos( $data ){
+	$post_id = wp_insert_post(array('post_title'=>'jjkjjj', 'post_type'=>'todo', 'post_status'=>'publish' ));
+	update_post_meta( $post_id, 'is_done', 'false' );
+	return $args;
 }
