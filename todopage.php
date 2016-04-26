@@ -21,17 +21,17 @@
 				<div ng-controller="TodoListController">
 					<div class="btn-group">
 						<div class="btn">
-							<span class="cursor-pointer" ng-click="getTodos()">
+							<span class="cursor-pointer" ng-click="filters.is_done = ''">
 								<a>Show All</a>
 							</span>
 						</div>
 						<div class="btn">
-							<span class="cursor-pointer" ng-click="hideCompleted()">
+							<span class="cursor-pointer" ng-click="filters.is_done = 'false'">
 								<a>Hide Completed</a>
 							</span>
 						</div>
 						<div class="btn">
-							<span class="cursor-pointer" ng-click="showCompleted()">
+							<span class="cursor-pointer" ng-click="filters.is_done = 'true'">
 								<a>Show Completed</a>
 							</span>
 						</div>
@@ -39,13 +39,12 @@
 
 					<p><input type="text" ng-model="search" placeholder="Search"  class="search-query"></p>
 					<ul class="unstyled" ui-sortable ng-model="todos">
-						<li ng-repeat="todo in todos | filter : search ">
+						<li ng-repeat="todo in todos | filter : search | filter:filters">
 							<label class="checkbox">
 								<input type="checkbox" ng-checked="todo.is_done =='true'" ng-model="todo.is_done" ng-click='updateTodos(todo)'>
 								<span class="done-{{todo.is_done}}">{{todo.title.rendered}}</span>
 								<span ng-click='deleteTodos(todo)' class="glyphicon glyphicon-remove cursor-pointer"></span>
 							</label>
-
 						</li>
 					</ul>
 					<form ng-submit="addTodo()">

@@ -9,9 +9,6 @@ License: GPLv2
 Text Domain: rest-api-demo
 */
 
-
-
-
 function rad_enqueue_script(){
 	wp_enqueue_script( 'angular', plugin_dir_url( __FILE__ ) . 'lib/angular/angular.js', array( 'jquery' ));
 	wp_enqueue_script( 'angular-route', plugin_dir_url( __FILE__ )  . 'lib/angular-route/angular-route.js', array( 'angular' ) );
@@ -50,9 +47,9 @@ function rad_register_todos() {
 		'has_archive'        => false,
 		'hierarchical'       => false,
 		'menu_position'      => null,
-		'with_front' => false,
+		'with_front'         => false,
 		'supports'           => array( 'title', 'editor' ),
-		'show_in_rest' => true,
+		'show_in_rest'       => true,
 	);
 
 	register_post_type( 'todo', $args );
@@ -64,7 +61,7 @@ function slug_get_is_done( $object, $field_name, $request ) {
     return get_post_meta( $object[ 'id' ], $field_name, true );
 }
 
-function slug_update_spaceship( $value, $object, $field_name ) {
+function slug_update_is_done( $value, $object, $field_name ) {
 	if ( ! $value || ! is_string( $value ) ) {
 		return;
 	}
@@ -84,26 +81,24 @@ function register_rest_api_route() {
         )
     );
 
-	// register_rest_route( 'rest-api-demo/v1', '/posts/todos/', array(
-	// 			'methods' => 'GET',
-	// 			'callback' => 'get_todos',
-	// 			'args' => array(
-	// 				'id' => array(
-	// 				'validate_callback' => function($param, $request, $key) {
-	// 					return is_numeric( $param );
-	// 				}
-	// 			),
-	// 		),
-	// 	)
-	// );
-
-	register_rest_route( 'rest-api-demo/v1', '/posts/todos/add', array(
+    register_rest_route( 'rest-api-demo/v2', '/posts/todos/add', array(
 			'methods' => 'POST',
 			'callback' => 'add_todos',
-			'args' => $param,
 		)
 	);
 
+	register_rest_route( 'rest-api-demo/v2', '/posts/todos/delete/(?P<id>\d+)', array(
+			'methods' => 'DELETE',
+			'callback' => 'delete_todos',
+		)
+	);
+
+	register_rest_route( 'rest-api-demo/v2', '/posts/todos/update', array(
+			'methods' => 'PUT',
+			'callback' => 'update_todos',
+			'args' => $param,
+		)
+	);
 }
 
 function get_todos( $data ) {
@@ -115,8 +110,24 @@ function get_todos( $data ) {
 	return( $todos );
 }
 
-function add_todos( $data ){
-	$post_id = wp_insert_post(array('post_title'=>'jjkjjj', 'post_type'=>'todo', 'post_status'=>'publish' ));
-	update_post_meta( $post_id, 'is_done', 'false' );
-	return $args;
+function add_todos( WP_REST_Request $request ){
+	$post_ids = array();
+	$params = $request->get_params();
+	$todos = $params['todos'];
+	foreach ($todos as $todo) {
+		$post_id = wp_insert_post( array( 'post_title' => $todo['itemname'], 'post_type'=>'todo', 'post_status'=>'publish' ) );
+		update_post_meta( $post_id, 'is_done', 'false' );
+		$post_ids[] = $post_id;
+	}
+	return $post_ids;
+}
+
+function delete_todos( WP_REST_Request $request ) {
+	$params = $request->get_params();
+	return wp_delete_post( $params['id'] );
+}
+
+function update_todos( WP_REST_Request $request ){
+	$params = $request->get_params();
+	return update_post_meta($params['todo_id'], 'is_done', $params['todo_is_done']);
 }
