@@ -13,12 +13,17 @@ function rad_enqueue_script(){
 	wp_enqueue_script( 'angular', plugin_dir_url( __FILE__ ) . 'lib/angular/angular.js', array( 'jquery' ));
 	wp_enqueue_script( 'angular-route', plugin_dir_url( __FILE__ )  . 'lib/angular-route/angular-route.js', array( 'angular' ) );
 	wp_enqueue_script( 'angular-resource', plugin_dir_url( __FILE__ )  . 'lib/angular-resource/angular-resource.js', array( 'angular' ) );
+	wp_enqueue_script( 'bootstrap-script', plugin_dir_url( __FILE__ )  . 'lib/bootstrap/bootstrap.min.js', array( 'angular' ) );
 	wp_enqueue_script( 'application-script', plugin_dir_url( __FILE__ )  . 'js/app.js', array( 'angular' ) );
+	$wnm_custom = array( 'site_url' => site_url() );
+	wp_localize_script( 'application-script', 'wnm_custom', $wnm_custom );
+	wp_register_style( 'bootstrap-style', 'http://netdna.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css' );
+	wp_enqueue_style( 'bootstrap-style' );
 }
 
-add_action( 'wp_enqueue_scripts', 'rad_enqueue_script' );
+add_action( 'wp_enqueue_scripts', 'rad_enqueue_script', 20 );
 
-function rad_register_todos() {
+function rad_register_todos(){
 	$labels = array(
 		'name'               => _x( 'Todos', 'post type general name', 'rest-api-demo' ),
 		'singular_name'      => _x( 'Todo', 'post type singular name', 'rest-api-demo' ),
@@ -54,6 +59,7 @@ function rad_register_todos() {
 
 	register_post_type( 'todo', $args );
 }
+
 add_action( 'init', 'rad_register_todos' );
 
 
@@ -129,5 +135,5 @@ function delete_todos( WP_REST_Request $request ) {
 
 function update_todos( WP_REST_Request $request ){
 	$params = $request->get_params();
-	return update_post_meta($params['todo_id'], 'is_done', $params['todo_is_done']);
+	return update_post_meta( $params['todo_id'], 'is_done', $params['todo_is_done'] );
 }

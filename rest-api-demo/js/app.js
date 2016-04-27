@@ -3,12 +3,12 @@
 /* Controllers */
 
 var todosApp = angular.module('todoApp', []);
+var siteurl = wnm_custom.site_url;
 
 todosApp.controller('TodoListController', function ( $scope, $http ) {
 
     $scope.getTodos = function () {
-        //$http.get("http://localhost/woocomm/wp-json/rest-api-demo/v1/posts/todos")
-        $http.get( "http://localhost/woocomm/wp-json/wp/v2/todo" ).success( function( response ) {
+        $http.get( siteurl + "/wp-json/wp/v2/todo" ).success( function( response ) {
             $scope.todos = response;
         });
     };
@@ -26,7 +26,7 @@ todosApp.controller('TodoListController', function ( $scope, $http ) {
         }
         var req = {
             method: 'POST',
-            url: 'http://localhost/woocomm/wp-json/rest-api-demo/v2/posts/todos/add',
+            url: siteurl + '/wp-json/rest-api-demo/v2/posts/todos/add',
             data: { 'todos' : itemsObject }
         }
         $http(req).success( function ( data ) {
@@ -44,7 +44,7 @@ todosApp.controller('TodoListController', function ( $scope, $http ) {
         };
         var req = {
             method: 'PUT',
-            url: 'http://localhost/woocomm/wp-json/rest-api-demo/v2/posts/todos/update',
+            url: siteurl + '/wp-json/rest-api-demo/v2/posts/todos/update',
             data: { 'todo_id' : todo.id, 'todo_is_done' : is_done_val}
         }
         $http(req).success( function ( data ) {
@@ -57,14 +57,14 @@ todosApp.controller('TodoListController', function ( $scope, $http ) {
     $scope.deleteTodos = function(todo) {
     var req = {
             method: 'DELETE',
-            url: 'http://localhost/woocomm/wp-json/rest-api-demo/v2/posts/todos/delete/'+todo.id,
+            url: siteurl + '/wp-json/rest-api-demo/v2/posts/todos/delete/'+todo.id,
         }
         $http(req).success( function ( data ) {
             $scope.getTodos();
             $scope.addtodoitem = '';
         })
         return;
-  }
+    }
 
-  $scope.getTodos();
+    $scope.getTodos();
 });
