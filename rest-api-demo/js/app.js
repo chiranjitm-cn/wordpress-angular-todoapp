@@ -15,12 +15,17 @@ todosApp.controller('TodoListController', function ( $scope, $http ) {
 
     $scope.addTodo = function() {
         var itemsObject = [];
-        var items = $scope.addtodoitem;
-        var arr_items = items.split(',');
-        for (var i = 0; i < arr_items.length; i++ ) {
-            var item = arr_items[i];
+        var items = $scope.addtodoitem;console.log(items);
+        var items_todos = items.todo;
+        var items_dates = items.duedate;
+        var arr_items_todos = items_todos.split(',');
+        var arr_items_dates = items_dates.split(',');
+        for (var i = 0; i < arr_items_todos.length; i++ ) {
+            var item_todo = arr_items_todos[i];
+            var item_date = arr_items_dates[i];
             var itemObj = {
-                itemname: item
+                itemname: item_todo,
+                duedate: item_date
             };
             itemsObject.push(itemObj);
         }

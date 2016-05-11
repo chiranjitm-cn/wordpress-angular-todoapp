@@ -48,8 +48,10 @@
 						</li>
 					</ul>
 					<form ng-submit="addTodo()">
-						<input type="text" ng-model="addtodoitem"  size="30"
+						<input type="text" ng-model="addtodoitem.todo"  size="30"
 						placeholder="add new todo here">
+						<input type="text" ng-model="addtodoitem.duedate"  size="30"
+						placeholder="add todo due date">
 						<input class="btn-primary" type="submit" value="add">
 					</form>
 				</div>

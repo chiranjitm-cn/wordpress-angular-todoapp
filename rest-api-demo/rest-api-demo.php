@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Rest API Demo
-Plugin URI: 
+Plugin URI:
 Description: Rest API Demo.
 Version: 1.0.0
 Author: Chiranjit Makur
@@ -123,6 +123,7 @@ function add_todos( WP_REST_Request $request ){
 	foreach ($todos as $todo) {
 		$post_id = wp_insert_post( array( 'post_title' => $todo['itemname'], 'post_type'=>'todo', 'post_status'=>'publish' ) );
 		update_post_meta( $post_id, 'is_done', 'false' );
+		update_post_meta( $post_id, 'due_date', $todo['duedate'] );
 		$post_ids[] = $post_id;
 	}
 	return $post_ids;
