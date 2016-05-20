@@ -15,11 +15,18 @@ todosApp.controller('TodoListController', function ( $scope, $http ) {
 
     $scope.addTodo = function() {
         var itemsObject = [];
-        var items = $scope.addtodoitem;console.log(items);
+        var arr_items_dates = '';
+        var items = $scope.addtodoitem;
         var items_todos = items.todo;
-        var items_dates = items.duedate;
         var arr_items_todos = items_todos.split(',');
-        var arr_items_dates = items_dates.split(',');
+
+        if( items.duedate ) {
+            var items_dates = items.duedate;
+            arr_items_dates = items_dates.split(',');
+        } else {
+            arr_items_dates = '';
+        }
+
         for (var i = 0; i < arr_items_todos.length; i++ ) {
             var item_todo = arr_items_todos[i];
             var item_date = arr_items_dates[i];
@@ -31,7 +38,7 @@ todosApp.controller('TodoListController', function ( $scope, $http ) {
         }
         var req = {
             method: 'POST',
-            url: siteurl + '/wp-json/rest-api-demo/v2/posts/todos/add',
+            url: siteurl + '/wp-json/wp/v2/posts/todos/add',
             data: { 'todos' : itemsObject }
         }
         $http(req).success( function ( data ) {
@@ -49,7 +56,7 @@ todosApp.controller('TodoListController', function ( $scope, $http ) {
         };
         var req = {
             method: 'PUT',
-            url: siteurl + '/wp-json/rest-api-demo/v2/posts/todos/update',
+            url: siteurl + '/wp-json/wp/v2/posts/todos/update',
             data: { 'todo_id' : todo.id, 'todo_is_done' : is_done_val}
         }
         $http(req).success( function ( data ) {
@@ -62,7 +69,7 @@ todosApp.controller('TodoListController', function ( $scope, $http ) {
     $scope.deleteTodos = function(todo) {
     var req = {
             method: 'DELETE',
-            url: siteurl + '/wp-json/rest-api-demo/v2/posts/todos/delete/'+todo.id,
+            url: siteurl + '/wp-json/wp/v2/posts/todos/delete/'+todo.id,
         }
         $http(req).success( function ( data ) {
             $scope.getTodos();
