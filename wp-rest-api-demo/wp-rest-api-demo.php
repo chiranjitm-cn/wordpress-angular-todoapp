@@ -104,22 +104,29 @@ function cfwprapi_register_custom_route() {
         )
     );
 
-    register_rest_route( 'wp/v2', '/posts/todos/add', array(
-            'methods' => 'POST',
-            'callback' => 'cfwprapi_add_todos',
-        )
-    );
+    register_rest_route( 'wp/v2', '/' . 'posts/todos/', array(
+        array(
+            'methods'         => WP_REST_Server::READABLE,   // GET method
+            'callback'        => 'cfwprapi_get_todos',
+        ),
+        array(
+            'methods'         => WP_REST_Server::CREATABLE,  // POST Method
+            'callback'        => 'cfwprapi_add_todos',
+            'permission_callback' => 'cfwprapi_can_user_have_access',
+        ),
+    ) );
 
     register_rest_route( 'wp/v2', '/posts/todos/delete/(?P<id>\d+)', array(
-            'methods' => 'DELETE',
+            'methods' => 'DELETE',                           // DELETE Method
             'callback' => 'cfwprapi_delete_todos',
+            'permission_callback' => 'cfwprapi_can_user_have_access',
         )
     );
 
     register_rest_route( 'wp/v2', '/posts/todos/update', array(
-            'methods' => 'PUT',
+            'methods' => 'PUT',                              // PUT Method
             'callback' => 'cfwprapi_update_todos',
-            'args' => $param,
+            'permission_callback' => 'cfwprapi_can_user_have_access',
         )
     );
 }
@@ -159,6 +166,18 @@ function cfwprapi_update_is_done( $value, $object, $field_name ) {
 }
 
 /**
+ * Callback to verify authenticated user.
+ *
+ * @since  1.0.0
+ *
+ * @param  object $request REST request object.
+ * @return bool            True if user can save todos, otherwise false.
+ */
+function cfwprapi_can_user_have_access( WP_REST_Request $request ) {
+    return current_user_can( 'manage_options' );
+}
+
+/**
  * Callback to get all todo items.
  *
  * @since  1.0.0
@@ -176,16 +195,16 @@ function cfwprapi_get_todos( $data ) {
         return new WP_REST_Response(
             array(
                 'code'    => 'no_data_found',
-                'message' => __( 'Todo item is missing.', 'cfwprapi' ),
+                'message' => __( 'No todo data is found.', 'cfwprapi' ),
             ),
-            400
+            500
         );
     }
 
     // Return post data when succeeded!
     return new WP_REST_Response(
         array(
-            'code'    => 'success',
+            'code'    => 'fetched_all_todo_items',
             'message' => sprintf( __( 'Successfully fetch all todo items.', 'cfwprapi' ) ),
             'data'    => array(
                 'response' => $posts,
@@ -203,17 +222,18 @@ function cfwprapi_get_todos( $data ) {
  * @param  object $request REST request object.
  * @return WP_REST_Response
  */
-function cfwprapi_add_todos( WP_REST_Request $request ){
-    $post_ids = array();
+function cfwprapi_add_todos( WP_REST_Request $request ) {
+
+    // Get the todo data out of the request
     $params = $request->get_params();
-    $todos = $params['todos']; print_r($todos);
+    $todos = $params['todos'];
 
     // If array is empty, throw an error
     if ( empty( $todos ) || ! is_array( $todos ) ) {
         return new WP_REST_Response(
             array(
-                'code'    => 'import_data_error',
-                'message' => __( 'Todo item is missing.', 'cfwprapi' ),
+                'code'    => 'todo_bad_data_error',
+                'message' => __( 'Todo data is missing.', 'cfwprapi' ),
                 'data'    => array(
                     'request' => $params,
                 ),
@@ -221,6 +241,60 @@ function cfwprapi_add_todos( WP_REST_Request $request ){
             400
         );
     }
+
+    // If todo function is missing, throw an error
+    if ( ! function_exists( 'cfwprapi_add_todos_data')  ) {
+        return new WP_REST_Response(
+            array(
+                'code'    => 'add_todo_method_missing',
+                'message' => __( 'Adding todo data unavailable. Method may be not defined.', 'cfwprapi' ),
+            ),
+            501
+        );
+    }
+
+    // Save our todo data
+    $response = cfwprapi_add_todos_data( $todos );
+
+    // If we got bad response, throw an error
+    if ( ! $response ) {
+        return new WP_REST_Response(
+            array(
+                'code'    => 'save_failed',
+                'message' => __( 'Save failed, please try again.', 'cfwprapi' ),
+                'data'    => array(
+                    'response' => $response,
+                    'request'  => $request,
+                ),
+            ),
+            500
+        );
+    }
+
+    // Return post-id when succeeded!
+    return new WP_REST_Response(
+        array(
+            'code'    => 'successfully_saved',
+            'message' => sprintf( __( 'Successfully inserted.', 'cfwprapi' ) ),
+            'data'    => array(
+                'response' => $response,
+            ),
+        ),
+        200
+    );
+}
+
+/**
+ * Callback to actually insert todo data.
+ *
+ * @since  1.0.0
+ *
+ * @param  array $todos
+ * @return array $post_ids
+ */
+function cfwprapi_add_todos_data( $todos ) {
+
+    $post_ids = array();
 
     // Insert data
     foreach ($todos as $todo) {
@@ -231,17 +305,7 @@ function cfwprapi_add_todos( WP_REST_Request $request ){
         $post_ids[] = $post_id;
     }
 
-     // Return post-id when succeeded!
-    return new WP_REST_Response(
-        array(
-            'code'    => 'success',
-            'message' => sprintf( __( 'Successfully inserted, id is %1$d .', 'cfwprapi' ), $post_ids ),
-            'data'    => array(
-                'response' => $post_ids,
-            ),
-        ),
-        200
-    );
+    return $post_ids;
 }
 
 /**
@@ -253,8 +317,37 @@ function cfwprapi_add_todos( WP_REST_Request $request ){
  * @return WP_REST_Response
  */
 function cfwprapi_delete_todos( WP_REST_Request $request ) {
-    $params = $request->get_params();
-    return wp_delete_post( $params['id'] );
+
+    $params = $request->get_params(); //print_r($params['id']);
+
+    // Delete our todo data
+    $response = wp_delete_post( $params['id'] );
+
+    // If we got bad response, throw an error
+    if ( ! $response ) {
+        return new WP_REST_Response(
+            array(
+                'code'    => 'delete_failed',
+                'message' => __( 'Delete failed, please try again. Id provided do not match.', 'cfwprapi' ),
+                'data'    => array(
+                    'response' => $response,
+                ),
+            ),
+            500
+        );
+    }
+
+    // Return post object when succeeded!
+    return new WP_REST_Response(
+        array(
+            'code'    => 'successfully_deleted',
+            'message' => sprintf( __( 'Successfully deleted.', 'cfwprapi' ) ),
+            'data'    => array(
+                'response' => $response,
+            ),
+        ),
+        200
+    );
 }
 
 /**
@@ -266,6 +359,34 @@ function cfwprapi_delete_todos( WP_REST_Request $request ) {
  * @return WP_REST_Response
  */
 function cfwprapi_update_todos( WP_REST_Request $request ){
+
     $params = $request->get_params();
-    return update_post_meta( $params['todo_id'], 'is_done', $params['todo_is_done'] );
+
+    $response = update_post_meta( $params['todo_id'], 'is_done', $params['todo_is_done'] );
+
+    // If we got bad response, throw an error
+    if ( ! $response ) {
+        return new WP_REST_Response(
+            array(
+                'code'    => 'update_failed',
+                'message' => __( 'Update failed for some reason, please try again.', 'cfwprapi' ),
+                'data'    => array(
+                    'response' => $response,
+                ),
+            ),
+            500
+        );
+    }
+
+    // Return post object when succeeded!
+    return new WP_REST_Response(
+        array(
+            'code'    => 'successfully_updated',
+            'message' => sprintf( __( 'Successfully updated.', 'cfwprapi' ) ),
+            'data'    => array(
+                'response' => $response,
+            ),
+        ),
+        200
+    );
 }

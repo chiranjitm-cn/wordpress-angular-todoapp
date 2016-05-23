@@ -38,7 +38,7 @@ todosApp.controller('TodoListController', function ( $scope, $http ) {
         }
         var req = {
             method: 'POST',
-            url: siteurl + '/wp-json/wp/v2/posts/todos/add',
+            url: siteurl + '/wp-json/wp/v2/posts/todos',
             data: { 'todos' : itemsObject }
         }
         $http(req).success( function ( data ) {
