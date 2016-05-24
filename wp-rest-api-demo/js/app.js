@@ -39,7 +39,10 @@ todosApp.controller('TodoListController', function ( $scope, $http ) {
         var req = {
             method: 'POST',
             url: siteurl + '/wp-json/wp/v2/posts/todos',
-            data: { 'todos' : itemsObject }
+            data: { 'todos' : itemsObject },
+            headers: {
+                'Authorization': 'Basic YWRtaW46Y24xMjM0NQ=='
+            },
         }
         $http(req).success( function ( data ) {
             $scope.getTodos();
@@ -57,7 +60,10 @@ todosApp.controller('TodoListController', function ( $scope, $http ) {
         var req = {
             method: 'PUT',
             url: siteurl + '/wp-json/wp/v2/posts/todos/update',
-            data: { 'todo_id' : todo.id, 'todo_is_done' : is_done_val}
+            data: { 'todo_id' : todo.id, 'todo_is_done' : is_done_val},
+            headers: {
+                'Authorization': 'Basic YWRtaW46Y24xMjM0NQ=='
+            },
         }
         $http(req).success( function ( data ) {
             $scope.getTodos();
@@ -70,6 +76,9 @@ todosApp.controller('TodoListController', function ( $scope, $http ) {
     var req = {
             method: 'DELETE',
             url: siteurl + '/wp-json/wp/v2/posts/todos/delete/'+todo.id,
+            headers: {
+                'Authorization': 'Basic YWRtaW46Y24xMjM0NQ=='
+            },
         }
         $http(req).success( function ( data ) {
             $scope.getTodos();
